@@ -1,9 +1,3 @@
-const conn = async ({ rethinkdb }) => {
-    const result = rethinkdb.connect({ host: 'localhost', port: 28015 })
-
-    console.log(`result conn => `, result)
-}
-
 const endpoints = [
     {
         action: `/v1/rooms`,
@@ -60,6 +54,7 @@ const init = (dependencies) => ({
             routes(dependencies.express.Router())(middlewares(dependencies))
 })
 
+//CLOSURES
 const server = ({ dependencies }) =>
     init(dependencies())
         .routes()
