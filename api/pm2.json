@@ -1,0 +1,27 @@
+{
+    "apps": [
+        {
+            "name": "chat",
+            "script": "./sources/index.js",
+            "instances": "1",
+            "exec_mode": "cluster",
+            "error_file": "./logs/chat_error.log",
+            "out_file": "./logs/chat_out.log",
+            "pid_file": "./logs/chat_pid.pid",
+            "ignore_watch": [
+                "node_modules",
+                ".DS_Store",
+                ".vscode",
+                "logs",
+                ".git"
+            ],
+            "trace": true,
+            "watch": true,
+            "env_development": {
+                "http": 9000
+            },
+            "env_staging": {},
+            "env_production": {}
+        }
+    ]
+}
