@@ -18,7 +18,10 @@
             "trace": true,
             "watch": true,
             "env_development": {
-                "http": 9000
+                "http": 9000,
+                "rethinkdb_host": "localhost",
+                "rethinkdb_port": 28015,
+                "rethinkdb_pass": "local"
             },
             "env_staging": {},
             "env_production": {}

@@ -1,21 +1,30 @@
+const connection = async ({ rethinkdb }) => await rethinkdb.connect({
+    host: process.env.rethinkdb_host,
+    port: process.env.rethinkdb_port,
+    password: process.env.rethinkdb_pass
+})
+
 const endpoints = [
     {
         action: `/v1/rooms`,
         method: `get`,
-        handler: (request, response, next) =>
+        handler: (connection) => (request, response, next) => {
             response.status(200).json({ rooms: [`rooms`] })
+        }
     },
     {
         action: `/v1/messages`,
         method: `get`,
-        handler: (request, response, next) =>
+        handler: (connection) => (request, response, next) => {
+            console.log('connection => ', connection)
             response.status(200).json({ messages: [`messages`] })
+        }
     }
 ]
 
-const routes = (router) => (api) => {
+const routes = (router, connection) => (api) => {
 
-    api.use(endpoints.map(endpoint => router[endpoint.method](endpoint.action, endpoint.handler)))
+    api.use(endpoints.map(endpoint => router[endpoint.method](endpoint.action, endpoint.handler(connection))))
 
     return {
         listen: () =>
@@ -48,17 +57,22 @@ const middlewares = ({
         ])
 
 const init = (dependencies) => ({
-    
+
     routes:
-        () =>
-            routes(dependencies.express.Router())(middlewares(dependencies))
+        (connection) =>
+            routes(dependencies.express.Router(), connection)(middlewares(dependencies))
 })
 
 //CLOSURES
-const server = ({ dependencies }) =>
+const server = async ({ dependencies }) => {
+
+    const _connection = await connection(dependencies())
+
     init(dependencies())
-        .routes()
+        .routes(_connection)
         .listen()
+
+}
 
 const start = () =>
     server(require(`./constants/index`))
