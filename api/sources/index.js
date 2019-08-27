@@ -1,23 +1,39 @@
 const connection = async ({ rethinkdb }) => await rethinkdb.connect({
     host: process.env.rethinkdb_host,
     port: process.env.rethinkdb_port,
-    password: process.env.rethinkdb_pass
+    password: process.env.rethinkdb_pass,
+    db: process.env.rethinkdb_db
 })
 
-const endpoints = [
-    {
-        action: `/v1/rooms`,
-        method: `get`,
-        handler: (connection) => (request, response, next) => {
-            response.status(200).json({ rooms: [`rooms`] })
+const controller = {
+    messages: {
+        create: (connection) => async (request, response, next) => {
+
+
+console.log('conn => ', connection)
+            
+            const insert = await require('rethinkdb').table('messages').insert(request.body).run(connection)
+
+            console.log('insert => ', insert)
+
+            return response.status(201).json({ status: 'created' })
         }
-    },
+    }
+}
+
+const endpoints = [
     {
         action: `/v1/messages`,
         method: `get`,
         handler: (connection) => (request, response, next) => {
-            console.log('connection => ', connection)
-            response.status(200).json({ messages: [`messages`] })
+            response.status(200).json({ rooms: [`messages`] })
+        }
+    },
+    {
+        action: `/v1/messages`,
+        method: `post`,
+        handler: (connection) => async (request, response, next) => {
+            return await controller.messages.create(connection)(request, response, next)
         }
     }
 ]
