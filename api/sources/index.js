@@ -7,16 +7,22 @@ const connection = async ({ rethinkdb }) => await rethinkdb.connect({
 
 const controller = {
     messages: {
-        create: (connection) => async (request, response, next) => {
+        create: (rethinkdb, connection) => async (request, response, next) => {
 
+            console.log('conn => ', connection)
 
-console.log('conn => ', connection)
-            
-            const insert = await require('rethinkdb').table('messages').insert(request.body).run(connection)
+            const data = await rethinkdb.table('messages').insert(request.body).run(connection)
 
-            console.log('insert => ', insert)
+            return response.status(201).json({ status: 'created', data })
+        },
+        get: (rethinkdb, connection) => async (request, response, next) => {
 
-            return response.status(201).json({ status: 'created' })
+            const data = await rethinkdb.table('messages').filter({}).run(connection)
+
+            const list = await data.toArray()
+
+            return response.status(200).json({ status: 'ok', data: list })
+
         }
     }
 }
@@ -25,22 +31,22 @@ const endpoints = [
     {
         action: `/v1/messages`,
         method: `get`,
-        handler: (connection) => (request, response, next) => {
-            response.status(200).json({ rooms: [`messages`] })
+        handler: (rethinkdb, connection) => async (request, response, next) => {
+            return await controller.messages.get(rethinkdb, connection)(request, response, next)
         }
     },
     {
         action: `/v1/messages`,
         method: `post`,
-        handler: (connection) => async (request, response, next) => {
-            return await controller.messages.create(connection)(request, response, next)
+        handler: (rethinkdb, connection) => async (request, response, next) => {
+            return await controller.messages.create(rethinkdb, connection)(request, response, next)
         }
     }
 ]
 
-const routes = (router, connection) => (api) => {
+const routes = (router, rethinkdb, connection) => (api) => {
 
-    api.use(endpoints.map(endpoint => router[endpoint.method](endpoint.action, endpoint.handler(connection))))
+    api.use(endpoints.map(endpoint => router[endpoint.method](endpoint.action, endpoint.handler(rethinkdb, connection))))
 
     return {
         listen: () =>
@@ -76,7 +82,7 @@ const init = (dependencies) => ({
 
     routes:
         (connection) =>
-            routes(dependencies.express.Router(), connection)(middlewares(dependencies))
+            routes(dependencies.express.Router(), dependencies.rethinkdb, connection)(middlewares(dependencies))
 })
 
 //CLOSURES
